@@ -39,6 +39,7 @@ Web y mobile consumen **la misma API**, así que lo que hacés en una se ve en l
 | Gantt | [Word](entrega/documentos/GoTrain_Gantt.docx) · [PDF](entrega/documentos/pdf/GoTrain_Gantt.pdf) |
 | Video demo APK | [MP4](entrega/videos/GoTrain_Demo_App.mp4) |
 | Video demo Web | [MP4](entrega/videos/GoTrain_Demo_Web.mp4) |
+| APK para instalar | [GoTrain.apk](entrega/apk/GoTrain.apk) |
 
 Pruebas automatizadas de la API (32 casos): `cd backend` y `.venv\Scripts\python -m unittest discover -s tests -v`.
 
