@@ -1,0 +1,14 @@
+node_modules/
+.venv/
+__pycache__/
+*.db
+.env
+dist/
+.expo/
+
+.claude/
+instance/
+android/
+ios/
+*.apk
+
