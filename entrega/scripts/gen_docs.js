@@ -371,11 +371,11 @@ async function arquitectura() {
     bullets(['Contraseñas con hash (Werkzeug scrypt).', 'Tokens JWT HS256 con vencimiento de 7 días.', 'Cada consulta filtra por el usuario del token (no se accede a datos ajenos).',
       'Secretos (SECRET_KEY, ANTHROPIC_API_KEY) en variables de entorno.', 'CORS habilitado para los clientes; en producción se recomienda HTTPS.']),
     H1('7. Despliegue'),
-    tabla(['Elemento', 'Desarrollo / demo', 'Producción sugerida'], [
-      ['API Flask', 'python app.py (puerto 5000)', 'Gunicorn detrás de HTTPS (Render, Railway o VPS)'],
-      ['Base de datos', 'SQLite (backend/instance/gotrain.db)', 'PostgreSQL administrado'],
-      ['Web', 'Vite dev server (puerto 5173)', 'Build estático (npm run build) en Vercel, Netlify o GitHub Pages'],
-      ['Mobile', 'Expo Go o APK en la misma red WiFi', 'APK / AAB firmado y publicado en Google Play'],
+    tabla(['Elemento', 'Desarrollo local', 'Publicación (Render, render.yaml)'], [
+      ['API Flask', 'python app.py (puerto 5000)', 'Servicio web "gotrain-api" con Gunicorn y HTTPS'],
+      ['Base de datos', 'SQLite (backend/instance/gotrain.db)', 'PostgreSQL administrado "gotrain-db"'],
+      ['Web', 'Vite dev server (puerto 5173, proxy /api)', 'Sitio estático "gotrain-web" (npm run build) con VITE_API_URL'],
+      ['Mobile', 'Expo Go en la misma red WiFi', 'APK release (arm64) apuntando a la API publicada'],
     ], [1.4, 2.6, 3]),
   ]
   await generar('GoTrain_Diseno_de_Arquitectura', 'Diseño de Arquitectura', null, cuerpo)
@@ -531,14 +531,15 @@ async function manualApp() {
     H1('1. Introducción'),
     P('Este manual explica cómo instalar y usar la **app GoTrain para Android**. La app usa la misma cuenta y los mismos datos que la versión web.'),
     H2('Requisitos'),
-    bullets(['Celular Android 7.0 o superior.', 'Conexión con el servidor de GoTrain (en la demo: misma red WiFi que la PC que corre el servidor).', 'Unos 80 MB libres.']),
+    bullets(['Celular Android 7.0 o superior (procesador de 64 bits, arm64).', 'Conexión a internet.', 'Unos 80 MB libres.']),
     H1('2. Instalación del APK'),
     ...pasos([
       'Descargá el archivo **GoTrain.apk** desde el enlace de la entrega (sección Releases del repositorio).',
       'Abrí el archivo descargado. Si Android lo pide, permití **Instalar apps de origen desconocido** para el navegador o el administrador de archivos.',
       'Presioná **Instalar** y después **Abrir**.',
     ]),
-    P('**Configurar el servidor:** en la pantalla de login, tocá **Servidor: … · ⚙️ cambiar** y escribí la IP de la PC donde corre el backend (por ejemplo 192.168.1.9). Después tocá **Guardar servidor**. Se guarda en el celular.'),
+    P('**Servidor:** la app viene configurada con el servidor publicado de GoTrain (https://gotrain-api.onrender.com). Como está en un plan gratuito, la primera conexión del día puede tardar hasta un minuto en "despertar" al servidor.'),
+    P('Para usar un servidor local (la PC que corre el backend, en la misma red WiFi), tocá **Servidor: … · ⚙️ cambiar** en la pantalla de login y escribí la IP de la PC (por ejemplo 192.168.1.9). Después tocá **Guardar servidor**. Si dejás el campo vacío, vuelve al servidor publicado.'),
     H1('3. Inicio de sesión y registro'),
     P('Ingresá email y contraseña y tocá **Iniciar Sesión →**, o usá **Entrar con la cuenta demo**. Si falta un dato, se marca el campo con el error. Para crear una cuenta tocá **Registrate gratis**.'),
     imgPar(C('app_01_login'), C('app_02_login_validacion'), 'Login', 'Validación de campos'),
@@ -563,7 +564,7 @@ async function manualApp() {
     imgPar(C('app_16_perfil'), C('app_17_editar_perfil'), 'Perfil', 'Editar perfil'),
     H1('9. Preguntas frecuentes'),
     tabla(['Problema', 'Solución'], [
-      ['"No se pudo conectar con el servidor"', 'Verificá que el backend esté corriendo, que el celular esté en la misma red WiFi y que la IP configurada sea la de la PC. Revisá que el firewall de Windows permita el puerto 5000.'],
+      ['"No se pudo conectar con el servidor"', 'Con el servidor publicado: esperá un minuto y reintentá (se está despertando). Con un servidor local: verificá que el backend esté corriendo, que el celular esté en la misma WiFi, que la IP sea la de la PC y que el firewall de Windows permita el puerto 5000.'],
       ['Android no deja instalar el APK', 'Habilitá "Instalar apps desconocidas" para la app desde la que abrís el archivo.'],
       ['"Sesión vencida"', 'Iniciá sesión de nuevo.'],
       ['El Coach dice "Demo"', 'El servidor no tiene configurada la IA; igual arma rutinas según tu historial.'],

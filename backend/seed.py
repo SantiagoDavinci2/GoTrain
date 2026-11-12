@@ -137,4 +137,11 @@ def run():
 
 
 if __name__ == "__main__":
+    import sys
+    if "--si-vacia" in sys.argv:  # usado al desplegar: solo carga la demo si la base está vacía
+        with app.app_context():
+            db.create_all()
+            if User.query.first():
+                print("La base ya tiene datos, no se recarga.")
+                sys.exit(0)
     run()

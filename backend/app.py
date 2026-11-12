@@ -15,7 +15,10 @@ from models import (db, User, Workout, Exercise, SavedRoutine, Challenge, Challe
 import coach  # noqa: E402
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///gotrain.db")
+_db_url = os.getenv("DATABASE_URL", "sqlite:///gotrain.db")
+if _db_url.startswith(("postgres://", "postgresql://")):  # formato que dan Render / Heroku
+    _db_url = "postgresql+psycopg://" + _db_url.split("://", 1)[1]
+app.config["SQLALCHEMY_DATABASE_URI"] = _db_url
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "gotrain-dev-secret")
 app.json.ensure_ascii = False
 CORS(app)

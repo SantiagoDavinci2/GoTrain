@@ -6,13 +6,15 @@ import { Platform } from 'react-native'
 // La URL del backend se detecta sola: el celular usa la misma IP de la PC que corre Expo.
 // Si no conecta, poné la IP de tu PC a mano, por ejemplo: 'http://192.168.1.9:5000'
 const IP_MANUAL = ''
+// Servidor publicado en Render (ver render.yaml); es el que usa el APK instalado
+const SERVIDOR_PUBLICO = 'https://gotrain-api.onrender.com'
 
 function detectarApi() {
   if (IP_MANUAL) return IP_MANUAL
   if (Platform.OS === 'web') return `http://${window.location.hostname}:5000`
   const host = Constants.expoConfig?.hostUri?.split(':')[0]
-  if (host) return `http://${host}:5000`
-  return Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000'
+  if (host) return `http://${host}:5000` // corriendo con Expo en desarrollo
+  return SERVIDOR_PUBLICO
 }
 export let API_URL = detectarApi()
 

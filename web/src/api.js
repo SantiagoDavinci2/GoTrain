@@ -1,4 +1,8 @@
 // Cliente de la API REST de GoTrain (backend Flask)
+// En desarrollo se usa el proxy de Vite (/api). Publicada, VITE_API_URL apunta al backend.
+const host = import.meta.env.VITE_API_URL || ''
+const API_BASE = host && !host.startsWith('http') ? `https://${host}` : host
+
 const TOKEN_KEY = 'gotrain_token'
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
@@ -10,7 +14,7 @@ export async function api(path, { method = 'GET', body } = {}) {
   if (token) headers.Authorization = `Bearer ${token}`
   let res
   try {
-    res = await fetch(`/api${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
+    res = await fetch(`${API_BASE}/api${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
   } catch {
     throw new Error('No se pudo conectar con el servidor. ¿Está corriendo el backend?')
   }
