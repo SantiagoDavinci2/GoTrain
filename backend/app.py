@@ -138,6 +138,7 @@ def challenge_dict(ch, user):
         "id": ch.id, "titulo": ch.titulo, "descripcion": ch.descripcion, "tipo": ch.tipo,
         "icono": ch.icono, "metrica": ch.metrica, "meta": ch.meta, "unidad": ch.unidad,
         "participantes": len(ch.participantes), "estado_txt": estado_txt,
+        "creador": None if not ch.creador else ("Vos" if ch.creador_id == user.id else ch.creador.nombre),
         "empezo": ch.fecha_inicio <= hoy, "unido": part is not None,
         "progreso": round(part.progreso, 1) if part else 0,
         "completado": bool(part and part.completado),
@@ -432,6 +433,56 @@ def retos():
     return jsonify(out)
 
 
+METRICAS = {  # métrica -> (unidad, ícono por defecto)
+    "km": ("km", "🏃"), "entrenos": ("entrenos", "🎯"), "volumen": ("kg", "🏋️"), "dias": ("días", "🔥"),
+}
+
+
+@app.post("/api/challenges")
+@login_requerido
+def crear_reto():
+    d = request.get_json(silent=True) or {}
+    titulo = str(d.get("titulo", "")).strip()
+    descripcion = str(d.get("descripcion", "")).strip()
+    tipo, metrica = d.get("tipo", "grupal"), d.get("metrica")
+    if not 3 <= len(titulo) <= 120:
+        return error("El título debe tener entre 3 y 120 caracteres")
+    if len(descripcion) > 200:
+        return error("La descripción puede tener hasta 200 caracteres")
+    if tipo not in ("individual", "grupal"):
+        return error("El tipo debe ser individual o grupal")
+    if metrica not in METRICAS:
+        return error("Elegí qué se mide: km, entrenos, volumen o días")
+    try:
+        meta = float(d.get("meta"))
+    except (TypeError, ValueError):
+        return error("La meta tiene que ser un número")
+    if not 0 < meta <= 1_000_000:
+        return error("La meta tiene que ser mayor a 0")
+    hoy = date.today()
+    try:
+        inicio = date.fromisoformat(d["fecha_inicio"]) if d.get("fecha_inicio") else hoy
+        fin = date.fromisoformat(str(d.get("fecha_fin", "")))
+    except ValueError:
+        return error("Fecha inválida (formato AAAA-MM-DD)")
+    if inicio < hoy:
+        return error("El reto no puede empezar en el pasado")
+    if fin <= inicio:
+        return error("La fecha de fin tiene que ser posterior a la de inicio")
+    if (fin - inicio).days > 365:
+        return error("Un reto puede durar hasta un año")
+
+    unidad, icono = METRICAS[metrica]
+    ch = Challenge(titulo=titulo, descripcion=descripcion, tipo=tipo, metrica=metrica, meta=meta,
+                   unidad=unidad, icono=icono, fecha_inicio=inicio, fecha_fin=fin, creador_id=g.user.id)
+    db.session.add(ch)
+    db.session.add(ChallengeParticipant(challenge=ch, user_id=g.user.id))  # el creador queda unido
+    if tipo == "grupal":
+        db.session.add(Activity(user_id=g.user.id, icono="📣", texto=f'creó el reto "{titulo}". ¡Sumate!'))
+    db.session.commit()
+    return jsonify(challenge_dict(ch, g.user)), 201
+
+
 @app.post("/api/challenges/<int:cid>/join")
 @login_requerido
 def unirse(cid):
@@ -535,8 +586,18 @@ def health():
     return jsonify({"ok": True, "db": app.config["SQLALCHEMY_DATABASE_URI"].split(":")[0]})
 
 
+def actualizar_esquema():
+    """Crea las tablas que falten y agrega columnas nuevas a una base ya existente."""
+    from sqlalchemy import inspect, text
+    db.create_all()
+    columnas = {c["name"] for c in inspect(db.engine).get_columns("retos")}
+    if "creador_id" not in columnas:
+        db.session.execute(text("ALTER TABLE retos ADD COLUMN creador_id INTEGER REFERENCES usuarios(id)"))
+        db.session.commit()
+
+
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
+        actualizar_esquema()
     # host 0.0.0.0 para que la app mobile (celular en la misma red WiFi) pueda conectarse
     app.run(host="0.0.0.0", port=5000, debug=True)

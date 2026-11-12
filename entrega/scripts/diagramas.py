@@ -25,10 +25,11 @@ flowchart LR
     CU11([CU-11 Importar rutina del Coach])
     CU12([CU-12 Ver logros y nivel])
     CU13([CU-13 Buscar entrenamientos y usuarios])
+    CU14([CU-14 Crear reto])
   end
   V --> CU01
   V --> CU02
-  U --> CU03 & CU04 & CU05 & CU06 & CU07 & CU08 & CU09 & CU10 & CU12 & CU13
+  U --> CU03 & CU04 & CU05 & CU06 & CU07 & CU08 & CU09 & CU10 & CU12 & CU13 & CU14
   CU10 -. include .-> IA
   CU11 -. extend .-> CU10
   CU04 -. include: actualiza retos y logros .-> CU12
@@ -90,6 +91,7 @@ classDiagram
     +str unidad
     +date fecha_inicio
     +date fecha_fin
+    +crear()
   }
   class ParticipacionReto {
     +float progreso
@@ -129,6 +131,7 @@ classDiagram
   Usuario "1" --> "0..*" Rutina : guarda
   Usuario "1" --> "0..*" ParticipacionReto
   Reto "1" *-- "0..*" ParticipacionReto
+  Usuario "0..1" <-- "0..*" Reto : creador
   Usuario "1" --> "0..*" Actividad : publica
   Actividad "1" *-- "0..*" LikeActividad
   Usuario "1" --> "0..*" LikeActividad : da
@@ -144,6 +147,7 @@ erDiagram
   usuarios ||--o{ rutinas : guarda
   usuarios ||--o{ retos_participantes : participa
   retos ||--o{ retos_participantes : tiene
+  usuarios |o--o{ retos : crea
   usuarios ||--o{ actividad : publica
   actividad ||--o{ actividad_likes : recibe
   usuarios ||--o{ actividad_likes : da
@@ -203,6 +207,7 @@ erDiagram
     varchar unidad
     date fecha_inicio
     date fecha_fin
+    int creador_id FK
   }
   retos_participantes {
     int id PK

@@ -82,6 +82,12 @@ const CU = [
     pre: 'Usuario autenticado en la web.',
     flujo: ['El usuario escribe al menos 2 letras en el buscador.', 'El sistema muestra entrenamientos y usuarios que coinciden.'],
     alt: ['1a. Sin coincidencias: "Sin resultados".'], post: '—' },
+  { id: 'CU-14', nombre: 'Crear reto', actor: 'Usuario registrado', hu: 'HU-08',
+    desc: 'Crear un reto propio, individual o grupal, eligiendo qué se mide (km, entrenamientos, volumen o días de racha), la meta y las fechas.',
+    pre: 'Usuario autenticado.',
+    flujo: ['El usuario abre "Retos" y presiona "+ Crear reto".', 'Completa título, descripción opcional, tipo, qué se mide, meta y fechas (en la app elige la duración).', 'El sistema valida los datos.', 'El usuario confirma con "Crear reto".', 'El sistema crea el reto, inscribe al creador como participante y, si es grupal, publica la novedad en Actividad.'],
+    alt: ['3a. Título de menos de 3 caracteres, meta no numérica o menor o igual a 0: se muestra el error y no se crea.', '3b. Fecha de inicio en el pasado, fin anterior o igual al inicio, o duración mayor a un año: se rechaza.', '5a. Reto individual: solo lo ve el creador.'],
+    post: 'El reto aparece en "Activos" del creador; si es grupal, también en "Grupales" para toda la comunidad. Su progreso se actualiza al entrenar (CU-04, CU-05).' },
 ]
 
 async function casosDeUso() {
@@ -143,6 +149,11 @@ async function casosDePrueba() {
     ['CP-30', 'CU-12', 'Racha y logros', 'Usuario demo con 21 días seguidos', 'GET /profile', 'Racha ≥ 21 y logros "Racha 7" y "Racha 21" desbloqueados'],
     ['CP-31', 'CU-13', 'Búsqueda', 'Datos de ejemplo', 'Buscar "Leg" y "Mar"', 'Devuelve Leg Day y la usuaria María'],
     ['CP-32', 'Seguridad', 'Modificar datos ajenos', 'Dos usuarios', 'Usuario B borra un ejercicio de A', 'HTTP 404, el ejercicio no se borra'],
+    ['CP-41', 'CU-14', 'Crear reto grupal', 'Usuario autenticado', 'POST /challenges "50 km en dos semanas", km, meta 50', 'HTTP 201, el creador queda unido, otro usuario lo ve en Grupales y en Actividad'],
+    ['CP-42', 'CU-14', 'Crear reto con datos inválidos', 'Usuario autenticado', 'Título "ab", meta 0 o "mucho", métrica o tipo inexistentes, fechas inválidas', 'HTTP 400 con mensaje de error en cada caso'],
+    ['CP-43', 'CU-14', 'Reto individual privado', 'Dos usuarios', 'A crea un reto individual; B consulta Grupales', 'A lo ve en Activos; B no lo ve'],
+    ['CP-44', 'CU-14 / CU-04', 'Progreso de un reto creado', 'Reto creado de 2 entrenamientos', 'Registrar dos salidas de running', 'El reto pasa a Completados'],
+    ['CP-45', 'Seguridad', 'Crear reto sin sesión', '—', 'POST /challenges sin token', 'HTTP 401'],
   ].map((r) => [...r, resultados[r[0]] || 'Pendiente'])
   const UI = [
     ['CP-33', 'CU-02', 'Validación en tiempo real (web)', 'Pantalla de login', 'Presionar "Iniciar Sesión" con campos vacíos', 'Se marcan email y contraseña con mensaje de error', 'web_03'],
@@ -160,7 +171,7 @@ async function casosDePrueba() {
     P('Los casos de prueba validan los flujos principales y alternativos de los casos de uso de GoTrain y los controles de seguridad de la API.'),
     P('Las pruebas se ejecutaron de forma **automatizada**. No son resultados supuestos: cada resultado proviene de una ejecución real.'),
     bullets([
-      '**Pruebas de API (CP-01 a CP-32):** `backend/tests/test_api.py` (unittest). Corren contra una base PostgreSQL separada (gotrain_test), así no modifican la demo.',
+      '**Pruebas de API (CP-01 a CP-32 y CP-41 a CP-45):** `backend/tests/test_api.py` (unittest). Corren contra una base PostgreSQL separada (gotrain_test), así no modifican la demo.',
       '**Pruebas de interfaz (CP-33 a CP-40):** se recorrieron la web y la app con Playwright (Chromium) y se guardó la captura de cada resultado (`entrega/scripts/capturas.py`).',
     ]),
     H2('Cómo volver a ejecutarlas'),
@@ -212,6 +223,7 @@ async function requisitosFuncionales() {
     ['RF-25', 'Otorgar logros automáticamente: racha 7 y 21 días, 10/50/100 entrenamientos, primer reto, nivel 5 y 10.', 'HU-07', 'Media'],
     ['RF-26', 'Buscar entrenamientos propios y usuarios desde la web.', 'HU-03', 'Baja'],
     ['RF-27', 'En la app mobile, permitir configurar la dirección del servidor desde el login.', '—', 'Media'],
+    ['RF-28', 'Crear retos individuales o grupales con título, descripción, métrica (km, entrenamientos, volumen o días), meta y fechas; el creador queda inscripto y los grupales se publican en Actividad.', 'HU-08', 'Alta'],
   ].map((r) => [...r, 'Implementado'])
   const cuerpo = [
     H1('1. Introducción'),
@@ -227,7 +239,7 @@ async function requisitosFuncionales() {
       ['CU-01 Registrarse', 'RF-01, RF-02, RF-03'], ['CU-02 Iniciar sesión', 'RF-04, RF-05, RF-27'], ['CU-03 Gestionar perfil', 'RF-06, RF-07'],
       ['CU-04 Registrar entrenamiento', 'RF-08, RF-09, RF-10, RF-12, RF-16, RF-18, RF-24, RF-25'], ['CU-05 Registrar running', 'RF-11, RF-16'],
       ['CU-06 Usar rutina guardada', 'RF-13'], ['CU-07 / CU-08 Retos y ranking', 'RF-14, RF-15, RF-16, RF-17'], ['CU-09 Actividad', 'RF-18, RF-19'],
-      ['CU-10 / CU-11 Coach IA', 'RF-20, RF-21, RF-22, RF-23'], ['CU-12 Logros', 'RF-24, RF-25'], ['CU-13 Búsqueda', 'RF-26'],
+      ['CU-10 / CU-11 Coach IA', 'RF-20, RF-21, RF-22, RF-23'], ['CU-12 Logros', 'RF-24, RF-25'], ['CU-13 Búsqueda', 'RF-26'], ['CU-14 Crear reto', 'RF-28, RF-16, RF-18'],
     ], [2, 3]),
   ]
   await generar('GoTrain_Requisitos_Funcionales', 'Requisitos Funcionales', null, cuerpo)
@@ -245,7 +257,7 @@ async function requisitosNoFuncionales() {
     ['RNF-08', 'Portabilidad', 'App mobile para Android 7.0+ distribuida como APK; el mismo código React Native permite generar la versión iOS.', 'APK'],
     ['RNF-09', 'Interoperabilidad', 'Comunicación cliente-servidor por API REST con JSON sobre HTTP, compartida por web y mobile.', 'Diseño de arquitectura'],
     ['RNF-10', 'Disponibilidad', 'Si la Claude API no responde o falta la clave, el Coach sigue funcionando en modo demo.', 'RF-23 / CP-25'],
-    ['RNF-11', 'Rendimiento', 'Las operaciones habituales de la API responden en menos de 500 ms en la red local (las 32 pruebas de API corren en unos 19 s, incluyendo la creación de la base).', 'Ejecución de pruebas'],
+    ['RNF-11', 'Rendimiento', 'Las operaciones habituales de la API responden en menos de 500 ms en la red local (las 37 pruebas de API corren en unos 17 s, incluyendo la creación de la base).', 'Ejecución de pruebas'],
     ['RNF-12', 'Rendimiento', 'El Coach con IA responde en pocos segundos; mientras tanto la interfaz muestra "El coach está escribiendo…".', 'Coach'],
     ['RNF-13', 'Mantenibilidad', 'Separación en capas (presentación, API, lógica, datos) y ORM SQLAlchemy, que independiza el código del motor; la conexión a PostgreSQL se configura en el archivo .env.', 'Arquitectura'],
     ['RNF-14', 'Mantenibilidad', 'Código versionado en Git y pruebas automatizadas reproducibles.', 'Repositorio / tests'],
@@ -279,7 +291,7 @@ async function uml() {
       ['Entrenamiento', 'Sesión de entrenamiento. Estado "planificado" (el de hoy) o "completado". Tipo fuerza o running.', 'volumen_kg() = Σ series × reps × peso; total_series()'],
       ['Ejercicio', 'Ejercicio dentro de un entrenamiento (composición).', '—'],
       ['Rutina', 'Plantilla de ejercicios reutilizable (propia o sugerida por el Coach).', '—'],
-      ['Reto', 'Desafío individual o grupal con métrica (km, entrenos, volumen, días) y meta.', 'Activo entre fecha_inicio y fecha_fin'],
+      ['Reto', 'Desafío individual o grupal con métrica (km, entrenos, volumen, días) y meta. Puede crearlo un usuario.', 'Activo entre fecha_inicio y fecha_fin'],
       ['ParticipacionReto', 'Clase de asociación Usuario–Reto con el progreso.', 'completado al alcanzar la meta'],
       ['Actividad', 'Evento del feed social.', 'likes'],
       ['LikeActividad', 'Felicitación de un usuario a una actividad (única por usuario).', '—'],
@@ -305,7 +317,7 @@ async function der() {
       ['series', 'INTEGER', '', ''], ['reps', 'INTEGER', '', ''], ['peso_kg', 'FLOAT', '', '0 = peso corporal'], ['icono', 'VARCHAR(8)', '', 'Emoji'], ['orden', 'INTEGER', '', 'Posición']],
     rutinas: [['id', 'INTEGER', 'PK', ''], ['user_id', 'INTEGER', 'FK → usuarios', ''], ['nombre', 'VARCHAR(120)', 'NOT NULL', ''], ['descripcion', 'VARCHAR(200)', '', ''], ['ejercicios', 'JSON', '', 'Lista de ejercicios']],
     retos: [['id', 'INTEGER', 'PK', ''], ['titulo', 'VARCHAR(120)', 'NOT NULL', ''], ['descripcion', 'VARCHAR(200)', '', ''], ['tipo', 'VARCHAR(20)', '', 'individual / grupal'], ['icono', 'VARCHAR(8)', '', ''],
-      ['metrica', 'VARCHAR(20)', '', 'km / entrenos / volumen / dias'], ['meta', 'FLOAT', 'NOT NULL', ''], ['unidad', 'VARCHAR(20)', '', ''], ['fecha_inicio', 'DATE', '', ''], ['fecha_fin', 'DATE', 'NOT NULL', '']],
+      ['metrica', 'VARCHAR(20)', '', 'km / entrenos / volumen / dias'], ['meta', 'FLOAT', 'NOT NULL', ''], ['unidad', 'VARCHAR(20)', '', ''], ['fecha_inicio', 'DATE', '', ''], ['fecha_fin', 'DATE', 'NOT NULL', ''], ['creador_id', 'INTEGER', 'FK → usuarios, NULL', 'Quién lo creó (NULL = reto de GoTrain)']],
     retos_participantes: [['id', 'INTEGER', 'PK', ''], ['challenge_id', 'INTEGER', 'FK → retos', ''], ['user_id', 'INTEGER', 'FK → usuarios', ''], ['progreso', 'FLOAT', '', ''], ['completado', 'BOOLEAN', '', ''], ['unido', 'DATETIME', '', '']],
     actividad: [['id', 'INTEGER', 'PK', ''], ['user_id', 'INTEGER', 'FK → usuarios', 'Autor'], ['texto', 'VARCHAR(250)', 'NOT NULL', ''], ['icono', 'VARCHAR(8)', '', ''], ['likes', 'INTEGER', '', 'Contador'], ['fecha', 'DATETIME', '', '']],
     actividad_likes: [['id', 'INTEGER', 'PK', ''], ['activity_id', 'INTEGER', 'FK → actividad', ''], ['user_id', 'INTEGER', 'FK → usuarios', '']],
@@ -319,7 +331,7 @@ async function der() {
     BR(), H1('2. Relaciones'),
     tabla(['Relación', 'Cardinalidad', 'Descripción'], [
       ['usuarios – entrenamientos', '1 : N', 'Un usuario registra muchos entrenamientos.'], ['entrenamientos – ejercicios', '1 : N', 'Composición: al borrar el entrenamiento se borran sus ejercicios.'],
-      ['usuarios – rutinas', '1 : N', 'Rutinas guardadas del usuario.'], ['usuarios – retos', 'N : M', 'Resuelta con retos_participantes (guarda el progreso).'],
+      ['usuarios – rutinas', '1 : N', 'Rutinas guardadas del usuario.'], ['usuarios – retos', 'N : M', 'Resuelta con retos_participantes (guarda el progreso).'], ['usuarios – retos (creador)', '1 : N', 'Un usuario puede crear muchos retos.'],
       ['usuarios – actividad', '1 : N', 'Eventos publicados por el usuario.'], ['usuarios – actividad', 'N : M', 'Likes, resuelta con actividad_likes.'],
       ['usuarios – logros', '1 : N', 'Insignias desbloqueadas.'], ['usuarios – coach_mensajes', '1 : N', 'Historial del chat con el Coach.'],
     ], [2.2, 1, 3.5]),
@@ -337,7 +349,7 @@ async function arquitectura() {
     ['GET', '/api/workouts', 'Sí', 'Historial'], ['GET', '/api/workouts/today', 'Sí', 'Plan de hoy'], ['POST', '/api/workouts/{id}/exercises', 'Sí', 'Agregar ejercicio'],
     ['PUT / DELETE', '/api/exercises/{id}', 'Sí', 'Editar / quitar ejercicio'], ['POST', '/api/workouts/{id}/start', 'Sí', 'Iniciar cronómetro'], ['POST', '/api/workouts/{id}/finish', 'Sí', 'Finalizar y guardar'],
     ['POST', '/api/workouts/running', 'Sí', 'Registrar running'], ['GET', '/api/routines', 'Sí', 'Rutinas guardadas'], ['POST', '/api/routines/{id}/use', 'Sí', 'Usar rutina'],
-    ['GET', '/api/challenges?tab=', 'Sí', 'Retos por pestaña'], ['POST / DELETE', '/api/challenges/{id}/join', 'Sí', 'Unirse / salir'], ['GET', '/api/activity', 'Sí', 'Feed de actividad'],
+    ['GET', '/api/challenges?tab=', 'Sí', 'Retos por pestaña'], ['POST', '/api/challenges', 'Sí', 'Crear reto'], ['POST / DELETE', '/api/challenges/{id}/join', 'Sí', 'Unirse / salir'], ['GET', '/api/activity', 'Sí', 'Feed de actividad'],
     ['POST', '/api/activity/{id}/like', 'Sí', 'Felicitar / quitar'], ['GET / POST', '/api/coach/messages', 'Sí', 'Chat con el Coach'], ['POST', '/api/coach/messages/{id}/import', 'Sí', 'Importar rutina'],
     ['GET', '/api/health', 'No', 'Estado del servicio'],
   ]
@@ -499,6 +511,10 @@ async function manualWeb() {
     ...img(C('web_15_retos_ranking'), 560, 'Ranking de un reto'),
     P('En **Grupales** presioná **Unirme** para sumarte. Para salir, presioná **Unido ✓**.'),
     ...img(C('web_17_reto_unirse'), 560, 'Unirse a un reto'),
+    H2('6.1 Crear un reto'),
+    P('Presioná **+ Crear reto** (arriba a la derecha). Completá el **título**, una descripción opcional, el **tipo** (grupal: lo ve toda la comunidad; individual: solo vos), **qué se mide** (kilómetros corriendo, cantidad de entrenamientos, volumen levantado o días de racha), la **meta** y las fechas de inicio y fin. Presioná **Crear reto**.'),
+    P('Quedás inscripto automáticamente y el reto aparece en **Activos** con la etiqueta "Creado por Vos". Si es grupal, se publica en **Actividad** para que otros se sumen. El progreso se actualiza solo cada vez que entrenás.'),
+    ...img(C('web_28_crear_reto'), 560, 'Formulario para crear un reto'),
     P('En **Actividad** ves los logros y novedades de otros atletas. Con **❤️ Felicitar** les das un like; presionando otra vez lo quitás.'),
     ...img(C('web_19_actividad_like'), 560, 'Actividad de la comunidad'),
     ...img(C('web_20_retos_completados'), 560, 'Retos completados'),
@@ -550,6 +566,8 @@ async function manualApp() {
     P('Arriba elegís **Activos**, **Grupales**, **🔥 Actividad** o **Completados**. Cada reto muestra el progreso con una barra. Tocá **Ranking** para ver las primeras posiciones y **Unirme** para sumarte. Deslizá hacia abajo para actualizar.'),
     imgPar(C('app_04_retos_activos'), C('app_05_retos_ranking'), 'Retos activos', 'Ranking'),
     imgPar(C('app_06_retos_grupales'), C('app_07_actividad'), 'Retos grupales', 'Actividad: tocá ❤️ para felicitar'),
+    H2('5.1 Crear un reto'),
+    P('Tocá **+ Crear reto**. Escribí el título y, si querés, una descripción. Elegí el **tipo** (grupal o individual), **qué se mide** (km, entrenos, volumen o días de racha), la **meta** y la **duración** (1 semana, 2 semanas, 1 mes o 3 meses; empieza hoy). Tocá **Crear reto**: quedás inscripto y el reto aparece en **Activos**.'),
     H1('6. Entrenar'),
     P('Muestra el entrenamiento de hoy con ejercicios, series, duración y volumen. Tocá **+ Agregar ejercicio**, escribí el nombre, elegí el grupo muscular y completá series, repeticiones y kg. Con la ✕ quitás un ejercicio.'),
     imgPar(C('app_09_entrenar'), C('app_10_agregar_ejercicio'), 'Entrenamiento del día', 'Agregar ejercicio'),

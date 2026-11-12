@@ -13,16 +13,8 @@ if not exist .env (
   exit /b
 )
 
-rem Servidor PostgreSQL de GoTrain (puerto 5433). Si existe y no esta corriendo, se inicia.
-set "PGBIN=C:\Program Files\PostgreSQL\17\bin"
-set "PGDATA=%LOCALAPPDATA%\GoTrain\pgdata"
-if exist "%PGDATA%" (
-  "%PGBIN%\pg_isready.exe" -h localhost -p 5433 >nul 2>&1 || (
-    echo Iniciando PostgreSQL...
-    "%PGBIN%\pg_ctl.exe" start -D "%PGDATA%" -o "-p 5433" -l "%LOCALAPPDATA%\GoTrain\postgres.log" -w >nul
-  )
-)
-
+rem PostgreSQL de GoTrain en segundo plano (cerrar esta ventana no lo apaga)
+.venv\Scripts\python iniciar_postgres.py || (pause & exit /b)
 .venv\Scripts\python crear_base.py || (pause & exit /b)
 .venv\Scripts\python seed.py --si-vacia
 .venv\Scripts\python app.py

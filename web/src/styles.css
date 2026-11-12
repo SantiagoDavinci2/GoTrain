@@ -224,3 +224,12 @@ input, select, textarea { font-family: inherit; }
   .msg { max-width: 88%; }
   .top-user b { display: none; }
 }
+
+/* Crear reto */
+.ch-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.ch-form { background: var(--panel); border: 1px solid var(--accent); border-radius: 16px; padding: 22px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; }
+.ch-form h3 { margin: 0; font-size: 1.05rem; }
+.ch-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.ch-form-grid label { display: flex; flex-direction: column; gap: 6px; font-size: .78rem; color: var(--muted); }
+.ch-form-grid label.full { grid-column: 1 / -1; }
+.ch-form-grid .field { padding: 11px 12px; font-size: .88rem; color-scheme: dark; }

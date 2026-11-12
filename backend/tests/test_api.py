@@ -10,6 +10,7 @@ import json
 import os
 import sys
 import unittest
+from datetime import date, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -309,6 +310,62 @@ class GoTrainAPITest(unittest.TestCase):
         w = self.c.get("/api/workouts/today", headers=self.H).get_json()
         otro = self.nuevo_usuario("intruso@test.com")
         self.assertEqual(self.c.delete(f"/api/exercises/{w['ejercicios'][0]['id']}", headers=otro).status_code, 404)
+
+    # ---------------------------------------------------------------- CU-14 Crear reto
+    def reto_valido(self, **cambios):
+        hoy = date.today()
+        datos = {"titulo": "50 km en dos semanas", "descripcion": "Corré 50 km", "tipo": "grupal", "metrica": "km",
+                 "meta": 50, "fecha_inicio": hoy.isoformat(), "fecha_fin": (hoy + timedelta(days=14)).isoformat()}
+        datos.update(cambios)
+        return datos
+
+    @cp("CP-41")
+    def test_41_crear_reto_grupal(self):
+        """Crear un reto grupal: el creador queda unido y se publica en la actividad"""
+        H = self.nuevo_usuario("creador@test.com")
+        r = self.c.post("/api/challenges", headers=H, json=self.reto_valido())
+        self.assertEqual(r.status_code, 201)
+        reto = r.get_json()
+        self.assertTrue(reto["unido"])
+        self.assertEqual((reto["unidad"], reto["creador"], reto["participantes"]), ("km", "Vos", 1))
+        otro = self.nuevo_usuario("ve.reto@test.com")
+        self.assertTrue(any(c["id"] == reto["id"] for c in self.c.get("/api/challenges?tab=grupales", headers=otro).get_json()))
+        self.assertTrue(any("50 km en dos semanas" in a["texto"] for a in self.c.get("/api/activity", headers=otro).get_json()))
+
+    @cp("CP-42")
+    def test_42_crear_reto_invalido(self):
+        """Crear un reto con datos inválidos"""
+        hoy = date.today()
+        for cambios in ({"titulo": "ab"}, {"meta": 0}, {"meta": "mucho"}, {"metrica": "pasos"}, {"tipo": "secreto"},
+                        {"fecha_fin": hoy.isoformat()}, {"fecha_inicio": (hoy - timedelta(days=1)).isoformat()},
+                        {"fecha_fin": "31/12/2026"}):
+            r = self.c.post("/api/challenges", headers=self.H, json=self.reto_valido(**cambios))
+            self.assertEqual(r.status_code, 400, cambios)
+            self.assertIn("error", r.get_json())
+
+    @cp("CP-43")
+    def test_43_reto_individual_privado(self):
+        """Un reto individual solo lo ve quien lo creó"""
+        H = self.nuevo_usuario("individual@test.com")
+        reto = self.c.post("/api/challenges", headers=H, json=self.reto_valido(tipo="individual", titulo="Mi reto")).get_json()
+        self.assertTrue(any(c["id"] == reto["id"] for c in self.c.get("/api/challenges?tab=activos", headers=H).get_json()))
+        otro = self.nuevo_usuario("no.ve@test.com")
+        self.assertFalse(any(c["id"] == reto["id"] for c in self.c.get("/api/challenges?tab=grupales", headers=otro).get_json()))
+
+    @cp("CP-44")
+    def test_44_progreso_reto_creado(self):
+        """El progreso de un reto creado se actualiza al entrenar y se completa"""
+        H = self.nuevo_usuario("progreso@test.com")
+        reto = self.c.post("/api/challenges", headers=H, json=self.reto_valido(metrica="entrenos", meta=2)).get_json()
+        for _ in range(2):
+            self.c.post("/api/workouts/running", headers=H, json={"distancia_km": 5, "duracion_min": 30})
+        comp = self.c.get("/api/challenges?tab=completados", headers=H).get_json()
+        self.assertTrue(any(c["id"] == reto["id"] for c in comp))
+
+    @cp("CP-45")
+    def test_45_crear_reto_sin_sesion(self):
+        """Crear un reto sin iniciar sesión"""
+        self.assertEqual(self.c.post("/api/challenges", json=self.reto_valido()).status_code, 401)
 
     @classmethod
     def tearDownClass(cls):

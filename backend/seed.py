@@ -6,7 +6,7 @@ Usuario demo:  santiago@gotrain.com  /  gotrain123
 """
 from datetime import date, datetime, timedelta
 
-from app import app, otorgar_badges
+from app import app, otorgar_badges, actualizar_esquema
 from models import (db, User, Workout, Exercise, SavedRoutine, Challenge, ChallengeParticipant,
                     Activity, CoachMessage)
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     import sys
     if "--si-vacia" in sys.argv:  # usado al desplegar: solo carga la demo si la base está vacía
         with app.app_context():
-            db.create_all()
+            actualizar_esquema()
             if User.query.first():
                 print("La base ya tiene datos, no se recarga.")
                 sys.exit(0)

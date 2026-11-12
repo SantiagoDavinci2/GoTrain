@@ -20,7 +20,7 @@ Web y mobile consumen **la misma API**, así que lo que hacés en una se ve en l
 - **HU-04 Actividad social de retos**: feed con likes ("Felicitar").
 - **HU-06 Coach virtual IA**: chat que arma rutinas según tu historial y las importa al log de hoy.
 - **HU-07 Gamificación**: XP, niveles, racha de días y logros que se desbloquean solos.
-- **HU-08 Retos individuales y grupales**: unirse/salir, progreso automático al entrenar y ranking.
+- **HU-08 Retos individuales y grupales**: crear retos propios, unirse/salir, progreso automático al entrenar y ranking.
 
 ## Material de la entrega (carpeta `entrega/`)
 
@@ -41,7 +41,7 @@ Web y mobile consumen **la misma API**, así que lo que hacés en una se ve en l
 | Video demo Web | [MP4](entrega/videos/GoTrain_Demo_Web.mp4) |
 | APK para instalar | [GoTrain.apk](entrega/apk/GoTrain.apk) |
 
-Pruebas automatizadas de la API (32 casos): `cd backend` y `.venv\Scripts\python -m unittest discover -s tests -v`.
+Pruebas automatizadas de la API (37 casos): `cd backend` y `.venv\Scripts\python -m unittest discover -s tests -v`.
 
 ## Cómo correrlo
 

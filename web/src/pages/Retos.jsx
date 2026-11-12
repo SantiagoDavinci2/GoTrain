@@ -4,6 +4,52 @@ import { api, hace } from '../api'
 import { useToast } from '../App'
 
 const TABS = [['activos', 'Activos'], ['grupales', 'Grupales'], ['actividad', '🔥 Actividad'], ['completados', 'Completados']]
+const METRICAS = [['km', 'Kilómetros corriendo', 'km'], ['entrenos', 'Cantidad de entrenamientos', 'entrenos'],
+  ['volumen', 'Volumen levantado', 'kg'], ['dias', 'Días de racha', 'días']]
+const isoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10)
+const enDias = (n) => isoLocal(new Date(Date.now() + n * 86400000))
+const NUEVO = () => ({ titulo: '', descripcion: '', tipo: 'grupal', metrica: 'km', meta: '', fecha_inicio: enDias(0), fecha_fin: enDias(14) })
+
+function CrearReto({ onCreado, onCancelar }) {
+  const toast = useToast()
+  const [f, setF] = useState(NUEVO)
+  const [err, setErr] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
+  const unidad = METRICAS.find((m) => m[0] === f.metrica)[2]
+  const enviar = async (e) => {
+    e.preventDefault()
+    setErr('')
+    if (f.titulo.trim().length < 3) return setErr('El título debe tener al menos 3 caracteres')
+    if (!(Number(f.meta) > 0)) return setErr('La meta tiene que ser un número mayor a 0')
+    if (f.fecha_fin <= f.fecha_inicio) return setErr('La fecha de fin tiene que ser posterior a la de inicio')
+    setEnviando(true)
+    try {
+      const r = await api('/challenges', { method: 'POST', body: { ...f, titulo: f.titulo.trim(), meta: Number(f.meta) } })
+      toast(`¡Reto "${r.titulo}" creado! Ya estás participando 🏆`)
+      onCreado(r)
+    } catch (e2) { setErr(e2.message) } finally { setEnviando(false) }
+  }
+  return (
+    <form className="ch-form" onSubmit={enviar}>
+      <h3>Nuevo reto</h3>
+      <div className="ch-form-grid">
+        <label className="full">Título<input className="field" value={f.titulo} onChange={set('titulo')} maxLength={120} placeholder="Ej.: 50 km en dos semanas" autoFocus /></label>
+        <label className="full">Descripción (opcional)<input className="field" value={f.descripcion} onChange={set('descripcion')} maxLength={200} placeholder="¿De qué se trata?" /></label>
+        <label>Tipo<select className="field" value={f.tipo} onChange={set('tipo')}><option value="grupal">Grupal (público)</option><option value="individual">Individual (solo vos)</option></select></label>
+        <label>Qué se mide<select className="field" value={f.metrica} onChange={set('metrica')}>{METRICAS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+        <label>Meta ({unidad})<input className="field" type="number" min="1" step="any" value={f.meta} onChange={set('meta')} placeholder="Ej.: 50" /></label>
+        <label>Empieza<input className="field" type="date" value={f.fecha_inicio} min={enDias(0)} onChange={set('fecha_inicio')} /></label>
+        <label>Termina<input className="field" type="date" value={f.fecha_fin} min={f.fecha_inicio} onChange={set('fecha_fin')} /></label>
+      </div>
+      {err && <div className="field-err" style={{ marginTop: 4 }}>{err}</div>}
+      <div className="form-actions">
+        <button className="btn-sm" disabled={enviando}>{enviando ? 'Creando…' : 'Crear reto'}</button>
+        <button type="button" className="btn-sm outline" onClick={onCancelar}>Cancelar</button>
+      </div>
+    </form>
+  )
+}
 
 function Reto({ c, onCambio }) {
   const toast = useToast()
@@ -21,7 +67,7 @@ function Reto({ c, onCambio }) {
       <div className="ch-ic">{c.icono}</div>
       <div className="ch-body">
         <h4>{c.titulo}</h4>
-        <div className="ch-meta">Reto {c.tipo} · {c.participantes} participantes · {c.estado_txt}</div>
+        <div className="ch-meta">Reto {c.tipo} · {c.participantes} {c.participantes === 1 ? 'participante' : 'participantes'} · {c.estado_txt}{c.creador && ` · Creado por ${c.creador}`}</div>
         <div className="prog-bg"><div className="prog-fill" style={{ width: `${c.porcentaje}%` }} /></div>
         <div className="prog-label">
           {!c.empezo ? 'Todavía no empezó' : c.completado ? `${fmt(c.meta)} / ${fmt(c.meta)} ${c.unidad} — ¡Completado!` : `${fmt(c.progreso)} / ${fmt(c.meta)} ${c.unidad}`}
@@ -46,6 +92,7 @@ export default function Retos() {
   const tab = params.get('tab') || 'activos'
   const [items, setItems] = useState(null)
   const [err, setErr] = useState('')
+  const [creando, setCreando] = useState(false)
 
   useEffect(() => {
     setItems(null); setErr('')
@@ -60,8 +107,14 @@ export default function Retos() {
 
   return (
     <>
-      <h1>Retos</h1>
-      <div className="sub">Desafíos individuales y grupales con ranking entre amigos.</div>
+      <div className="ch-head">
+        <div>
+          <h1>Retos</h1>
+          <div className="sub">Desafíos individuales y grupales con ranking entre amigos.</div>
+        </div>
+        {!creando && <button className="btn-sm" onClick={() => setCreando(true)}>+ Crear reto</button>}
+      </div>
+      {creando && <CrearReto onCancelar={() => setCreando(false)} onCreado={() => { setCreando(false); setParams({ tab: 'activos' }); setItems(null); api('/challenges?tab=activos').then(setItems) }} />}
       <div className="challenge-tabs">
         {TABS.map(([k, l]) => <button key={k} className={`ctab ${tab === k ? 'active' : ''}`} onClick={() => setParams({ tab: k })}>{l}</button>)}
       </div>

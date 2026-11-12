@@ -126,7 +126,9 @@ class Challenge(db.Model):
     unidad = db.Column(db.String(20), default="")
     fecha_inicio = db.Column(db.Date, default=date.today)
     fecha_fin = db.Column(db.Date, nullable=False)
+    creador_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)  # NULL = reto de GoTrain
 
+    creador = db.relationship("User")
     participantes = db.relationship("ChallengeParticipant", backref="challenge", lazy=True,
                                     cascade="all, delete-orphan")
 
