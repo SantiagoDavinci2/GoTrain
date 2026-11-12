@@ -1,7 +1,7 @@
 """Completa la planilla PL03_ENTREGA.docx con los datos y enlaces de la entrega.
 
 Uso:  python completar_pl03.py <URL del repositorio GitHub> [URL web] [URL APK]
-Si no se pasan URL de web/APK, se usan los enlaces del repositorio.
+Si no se pasan URL de web/APK, se usan los enlaces del repositorio; con "-" quedan "(pendiente)".
 """
 import sys
 from pathlib import Path
@@ -86,8 +86,9 @@ for fila in t1.rows:
         nombre = DOCS[clave].split("/")[-1]
         escribir(fila.cells[1], nombre, f"{blob}/{DOCS[clave]}" if repo else None)
 
-escribir(t2.rows[0].cells[1], url_apk if repo else "(pendiente)", url_apk if repo else None)
-escribir(t2.rows[1].cells[1], url_web if repo else "(pendiente)", url_web if repo else None)
+for fila, url in ((t2.rows[0], url_apk), (t2.rows[1], url_web)):
+    ok = repo and url != "-"  # "-" deja el campo como pendiente
+    escribir(fila.cells[1], url if ok else "(pendiente)", url if ok else None)
 escribir(t2.rows[2].cells[1], repo or "(pendiente)", repo or None)
 
 for fila, (u, c, info) in zip(t3.rows[1:], USUARIOS):
