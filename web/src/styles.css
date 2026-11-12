@@ -68,7 +68,7 @@ input, select, textarea { font-family: inherit; }
 .demo-hint { font-size: .75rem; color: var(--dim); text-align: center; }
 
 /* ===== APP SHELL ===== */
-.app { display: flex; min-height: 100vh; }
+.app { display: flex; min-height: 100vh; background: linear-gradient(to right, var(--side) 240px, transparent 240px); }
 .sidebar { width: 240px; background: var(--side); border-right: 1px solid var(--line); padding: 28px 0; display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; }
 .sb-logo { color: var(--accent); font-size: 1.4rem; font-weight: 800; padding: 0 28px 30px; }
 .sb-item { display: block; padding: 14px 28px; font-size: .92rem; color: var(--muted); border-left: 3px solid transparent; }
@@ -212,7 +212,7 @@ input, select, textarea { font-family: inherit; }
   .hero { flex-direction: column; padding-top: 50px; }
   .hero-title { font-size: 2.4rem; }
   .hero-visual { width: 100%; max-width: 340px; }
-  .app { flex-direction: column; }
+  .app { flex-direction: column; background: none; }
   .sidebar { width: 100%; height: auto; position: static; flex-direction: row; overflow-x: auto; padding: 10px 0; }
   .sb-logo { display: none; }
   .sb-item { border-left: none; border-bottom: 3px solid transparent; padding: 10px 16px; white-space: nowrap; }

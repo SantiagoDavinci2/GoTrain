@@ -12,3 +12,7 @@ android/
 ios/
 *.apk
 
+entrega/.venv/
+entrega/node_modules/
+entrega/package-lock.json
+entrega/videos/_tmp/

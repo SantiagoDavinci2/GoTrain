@@ -14,11 +14,27 @@ function detectarApi() {
   if (host) return `http://${host}:5000`
   return Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000'
 }
-export const API_URL = detectarApi()
+export let API_URL = detectarApi()
+
+// En el APK instalado no hay Expo: la dirección del servidor se puede cambiar desde el login
+const SERVER_KEY = 'gotrain_server'
+export async function cambiarServidor(url) {
+  let u = url.trim().replace(/\/+$/, '')
+  if (u && !/^https?:\/\//.test(u)) u = `http://${u}`
+  if (u && !/:\d+$/.test(u) && u.startsWith('http://')) u += ':5000'
+  API_URL = u || detectarApi()
+  if (u) await AsyncStorage.setItem(SERVER_KEY, u)
+  else await AsyncStorage.removeItem(SERVER_KEY)
+  return API_URL
+}
 
 const TOKEN_KEY = 'gotrain_token'
 let token = null
-export const cargarToken = async () => (token = await AsyncStorage.getItem(TOKEN_KEY))
+export const cargarToken = async () => {
+  const srv = await AsyncStorage.getItem(SERVER_KEY)
+  if (srv) API_URL = srv
+  return (token = await AsyncStorage.getItem(TOKEN_KEY))
+}
 export const guardarToken = async (t) => {
   token = t
   if (t) await AsyncStorage.setItem(TOKEN_KEY, t)

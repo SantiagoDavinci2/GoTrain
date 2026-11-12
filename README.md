@@ -22,6 +22,26 @@ Web y mobile consumen **la misma API**, así que lo que hacés en una se ve en l
 - **HU-07 Gamificación**: XP, niveles, racha de días y logros que se desbloquean solos.
 - **HU-08 Retos individuales y grupales**: unirse/salir, progreso automático al entrenar y ranking.
 
+## Material de la entrega (carpeta `entrega/`)
+
+| Material | Archivo |
+|---|---|
+| Manual de usuario APK | [Word](entrega/documentos/GoTrain_Manual_de_Usuario_APK.docx) · [PDF](entrega/documentos/pdf/GoTrain_Manual_de_Usuario_APK.pdf) |
+| Manual de usuario Web | [Word](entrega/documentos/GoTrain_Manual_de_Usuario_Web.docx) · [PDF](entrega/documentos/pdf/GoTrain_Manual_de_Usuario_Web.pdf) |
+| Casos de uso | [Word](entrega/documentos/GoTrain_Casos_de_Uso.docx) · [PDF](entrega/documentos/pdf/GoTrain_Casos_de_Uso.pdf) |
+| Casos de prueba | [Word](entrega/documentos/GoTrain_Casos_de_Prueba.docx) · [PDF](entrega/documentos/pdf/GoTrain_Casos_de_Prueba.pdf) |
+| UML | [Word](entrega/documentos/GoTrain_UML.docx) · [PDF](entrega/documentos/pdf/GoTrain_UML.pdf) |
+| Requisitos funcionales | [Word](entrega/documentos/GoTrain_Requisitos_Funcionales.docx) · [PDF](entrega/documentos/pdf/GoTrain_Requisitos_Funcionales.pdf) |
+| Requisitos no funcionales | [Word](entrega/documentos/GoTrain_Requisitos_No_Funcionales.docx) · [PDF](entrega/documentos/pdf/GoTrain_Requisitos_No_Funcionales.pdf) |
+| DER | [Word](entrega/documentos/GoTrain_DER.docx) · [PDF](entrega/documentos/pdf/GoTrain_DER.pdf) |
+| Diseño de arquitectura | [Word](entrega/documentos/GoTrain_Diseno_de_Arquitectura.docx) · [PDF](entrega/documentos/pdf/GoTrain_Diseno_de_Arquitectura.pdf) |
+| Diagrama de componentes | [Word](entrega/documentos/GoTrain_Diagrama_de_Componentes.docx) · [PDF](entrega/documentos/pdf/GoTrain_Diagrama_de_Componentes.pdf) |
+| Gantt | [Word](entrega/documentos/GoTrain_Gantt.docx) · [PDF](entrega/documentos/pdf/GoTrain_Gantt.pdf) |
+| Video demo APK | [MP4](entrega/videos/GoTrain_Demo_App.mp4) |
+| Video demo Web | [MP4](entrega/videos/GoTrain_Demo_Web.mp4) |
+
+Pruebas automatizadas de la API (32 casos): `cd backend` y `.venv\Scripts\python -m unittest discover -s tests -v`.
+
 ## Cómo correrlo
 
 Necesitás tres terminales (o hacé doble clic en los `.bat`).

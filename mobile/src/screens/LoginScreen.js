@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native'
-import { api, API_URL } from '../api'
+import { api, API_URL, cambiarServidor } from '../api'
 import { C, s } from '../theme'
 import { useApp } from '../../App'
 
@@ -13,6 +13,8 @@ export default function LoginScreen() {
   const [tocado, setTocado] = useState(false)
   const [err, setErr] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [servidor, setServidor] = useState(API_URL)
+  const [editSrv, setEditSrv] = useState(null)
 
   const errores = {
     nombre: registro && !f.nombre.trim() ? 'Ingresá tu nombre' : '',
@@ -62,7 +64,19 @@ export default function LoginScreen() {
           <Text style={st.foot}>{registro ? '¿Ya tenés cuenta? ' : '¿No tenés cuenta? '}
             <Text style={{ color: C.accent, fontWeight: 'bold' }}>{registro ? 'Iniciá sesión' : 'Registrate gratis'}</Text></Text>
         </TouchableOpacity>
-        <Text style={st.server}>Servidor: {API_URL}</Text>
+        {editSrv !== null ? (
+          <View style={{ width: '100%', gap: 8 }}>
+            <TextInput style={[s.input, { fontSize: 13 }]} value={editSrv} onChangeText={setEditSrv} autoCapitalize="none"
+              placeholder="IP de la PC, ej: 192.168.1.9" placeholderTextColor="#666" keyboardType="url" />
+            <TouchableOpacity style={s.btnOutline} onPress={async () => { setServidor(await cambiarServidor(editSrv)); setEditSrv(null) }}>
+              <Text style={s.btnOutlineTxt}>Guardar servidor</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={() => setEditSrv(servidor.replace(/^http:\/\//, '').replace(/:5000$/, ''))}>
+            <Text style={st.server}>Servidor: {servidor} · ⚙️ cambiar</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   )
