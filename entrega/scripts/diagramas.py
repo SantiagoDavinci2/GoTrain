@@ -256,7 +256,7 @@ flowchart TB
     ORM[🗂️ SQLAlchemy ORM<br/>models.py]
   end
   subgraph D[Capa de datos]
-    DB[(🐘 PostgreSQL<br/>SQLite en desarrollo)]
+    DB[(🐘 PostgreSQL 17<br/>gotrain)]
   end
   EXT[☁️ Claude API<br/>Anthropic]
   W -- HTTP/JSON + Bearer token --> API

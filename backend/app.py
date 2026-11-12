@@ -15,7 +15,20 @@ from models import (db, User, Workout, Exercise, SavedRoutine, Challenge, Challe
 import coach  # noqa: E402
 
 app = Flask(__name__)
-_db_url = os.getenv("DATABASE_URL", "sqlite:///gotrain.db")
+
+
+def url_base_de_datos():
+    """PostgreSQL. Usa DATABASE_URL si está definida; si no, la arma con DB_USER, DB_PASSWORD, etc. del .env."""
+    if os.getenv("DATABASE_URL"):
+        return os.environ["DATABASE_URL"]
+    from urllib.parse import quote_plus
+    usuario = quote_plus(os.getenv("DB_USER", "postgres"))
+    clave = quote_plus(os.getenv("DB_PASSWORD", ""))
+    return (f"postgresql+psycopg://{usuario}:{clave}@{os.getenv('DB_HOST', 'localhost')}:"
+            f"{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'gotrain')}")
+
+
+_db_url = url_base_de_datos()
 if _db_url.startswith(("postgres://", "postgresql://")):  # formato que dan Render / Heroku
     _db_url = "postgresql+psycopg://" + _db_url.split("://", 1)[1]
 app.config["SQLALCHEMY_DATABASE_URI"] = _db_url

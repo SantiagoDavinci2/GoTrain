@@ -5,7 +5,7 @@ Implementación en código de los prototipos del Parcial 1 (`GoTrain_Web_Prototi
 | Parte | Tecnología | Carpeta |
 |---|---|---|
 | Backend / API REST | Python + Flask + SQLAlchemy | `backend/` |
-| Base de datos | SQLite (por defecto) o PostgreSQL | `backend/gotrain.db` |
+| Base de datos | PostgreSQL 17 (bases `gotrain` y `gotrain_test`) | `backend/models.py` |
 | Coach IA | Claude API (Anthropic) — modo demo sin API key | `backend/coach.py` |
 | Página web | React + Vite | `web/` |
 | App mobile | React Native + Expo | `mobile/` |
@@ -49,22 +49,24 @@ Necesitás tres terminales (o hacé doble clic en los `.bat`).
 
 ### 1. Backend (primero siempre)
 
+Necesitás **PostgreSQL 17**. Copiá `backend/.env.example` como `backend/.env` y completá `DB_USER`, `DB_PASSWORD` y `DB_PORT` de tu servidor PostgreSQL.
+
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
+.venv\Scripts\python crear_base.py
 .venv\Scripts\python seed.py
 .venv\Scripts\python app.py
 ```
 
-- `seed.py` crea la base con datos de ejemplo. Volvé a correrlo cuando quieras resetear la demo.
+- `crear_base.py` crea las bases `gotrain` (la app) y `gotrain_test` (las pruebas) si no existen.
+- `seed.py` carga las tablas con datos de ejemplo. Volvé a correrlo cuando quieras resetear la demo.
 - La API queda en `http://localhost:5000`.
 - **Cuenta demo:** `santiago@gotrain.com` / `gotrain123`
 
-**Coach con Claude real (opcional):** copiá `.env.example` como `.env` y completá `ANTHROPIC_API_KEY`. Sin la key, el coach responde en "modo demo" (rutinas armadas por reglas a partir de tu historial). En el chat se ve qué modo está activo.
+**Coach con Claude real (opcional):** completá `ANTHROPIC_API_KEY` en el `.env`. Sin la key, el coach responde en "modo demo" (rutinas armadas por reglas a partir de tu historial). En el chat se ve qué modo está activo.
 
-**PostgreSQL (opcional):** creá la base `gotrain` y en `.env` poné
-`DATABASE_URL=postgresql+psycopg://postgres:TU_PASSWORD@localhost:5432/gotrain`, después corré `seed.py`.
 
 ### 2. Página web
 

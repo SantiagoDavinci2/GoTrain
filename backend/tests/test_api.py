@@ -1,7 +1,7 @@
 """Casos de prueba automatizados de la API de GoTrain.
 
 Cada test corresponde a un caso de prueba (CP-xx) del documento de Casos de Prueba.
-Usa una base SQLite temporal, así no toca los datos de la demo.
+Usa la base PostgreSQL "gotrain_test", así no toca los datos de la demo.
 
 Ejecutar desde la carpeta backend:
     .venv\\Scripts\\python -m unittest discover -s tests -v
@@ -9,12 +9,14 @@ Ejecutar desde la carpeta backend:
 import json
 import os
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
-_DB = Path(tempfile.gettempdir()) / "gotrain_test.db"
-os.environ["DATABASE_URL"] = f"sqlite:///{_DB.as_posix()}"
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+os.environ.pop("DATABASE_URL", None)
+os.environ["DB_NAME"] = os.getenv("DB_NAME", "gotrain") + "_test"  # base PostgreSQL aparte (la crea crear_base.py)
 os.environ["ANTHROPIC_API_KEY"] = ""  # el coach se prueba en modo demo (sin costo ni red)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

@@ -1,4 +1,4 @@
-﻿// Genera todos los documentos Word de la entrega (carpeta entrega/documentos)
+// Genera todos los documentos Word de la entrega (carpeta entrega/documentos)
 const fs = require('fs')
 const path = require('path')
 const { P, H1, H2, H3, BR, bullets, pasos, img, imgPar, tabla, ficha, espacio, generar } = require('./docx_lib')
@@ -160,7 +160,7 @@ async function casosDePrueba() {
     P('Los casos de prueba validan los flujos principales y alternativos de los casos de uso de GoTrain y los controles de seguridad de la API.'),
     P('Las pruebas se ejecutaron de forma **automatizada**. No son resultados supuestos: cada resultado proviene de una ejecución real.'),
     bullets([
-      '**Pruebas de API (CP-01 a CP-32):** `backend/tests/test_api.py` (unittest). Corren contra una base de datos temporal, así no modifican la demo.',
+      '**Pruebas de API (CP-01 a CP-32):** `backend/tests/test_api.py` (unittest). Corren contra una base PostgreSQL separada (gotrain_test), así no modifican la demo.',
       '**Pruebas de interfaz (CP-33 a CP-40):** se recorrieron la web y la app con Playwright (Chromium) y se guardó la captura de cada resultado (`entrega/scripts/capturas.py`).',
     ]),
     H2('Cómo volver a ejecutarlas'),
@@ -247,7 +247,7 @@ async function requisitosNoFuncionales() {
     ['RNF-10', 'Disponibilidad', 'Si la Claude API no responde o falta la clave, el Coach sigue funcionando en modo demo.', 'RF-23 / CP-25'],
     ['RNF-11', 'Rendimiento', 'Las operaciones habituales de la API responden en menos de 500 ms en la red local (las 32 pruebas de API corren en unos 19 s, incluyendo la creación de la base).', 'Ejecución de pruebas'],
     ['RNF-12', 'Rendimiento', 'El Coach con IA responde en pocos segundos; mientras tanto la interfaz muestra "El coach está escribiendo…".', 'Coach'],
-    ['RNF-13', 'Mantenibilidad', 'Separación en capas (presentación, API, lógica, datos) y ORM SQLAlchemy, que permite pasar de SQLite a PostgreSQL cambiando solo DATABASE_URL.', 'Arquitectura'],
+    ['RNF-13', 'Mantenibilidad', 'Separación en capas (presentación, API, lógica, datos) y ORM SQLAlchemy, que independiza el código del motor; la conexión a PostgreSQL se configura en el archivo .env.', 'Arquitectura'],
     ['RNF-14', 'Mantenibilidad', 'Código versionado en Git y pruebas automatizadas reproducibles.', 'Repositorio / tests'],
     ['RNF-15', 'Escalabilidad', 'API sin estado (stateless) gracias a JWT: permite correr varias instancias detrás de un balanceador.', 'Arquitectura'],
     ['RNF-16', 'Privacidad', 'Al Coach IA solo se envían nombre, nivel, ciudad e historial de entrenamientos: no se envían email ni contraseña.', 'coach.py'],
@@ -259,7 +259,7 @@ async function requisitosNoFuncionales() {
     tabla(['ID', 'Categoría', 'Descripción', 'Verificación'], RNF, [0.8, 1.3, 4.6, 1.6]),
     H1('3. Restricciones técnicas'),
     bullets([
-      'Backend: Python 3.13, Flask 3, Flask-SQLAlchemy, PyJWT.', 'Base de datos: PostgreSQL 17 (producción) / SQLite (desarrollo y pruebas).',
+      'Backend: Python 3.13, Flask 3, Flask-SQLAlchemy, PyJWT.', 'Base de datos: PostgreSQL 17 (base "gotrain" para la app y "gotrain_test" para las pruebas automatizadas), driver psycopg 3.',
       'Web: React 18 + Vite 6. Mobile: React Native con Expo SDK 58.', 'IA: Claude API (modelo claude-opus-5-5) con salida estructurada en JSON.',
       'Navegadores soportados: Chrome, Edge y Firefox actuales.',
     ]),
@@ -314,7 +314,7 @@ async function der() {
   }
   const cuerpo = [
     H1('1. Diagrama Entidad-Relación'),
-    P('Modelo de datos implementado con SQLAlchemy. Funciona sobre PostgreSQL (producción) o SQLite (desarrollo). Son 10 tablas.'),
+    P('Modelo de datos implementado con SQLAlchemy. La base de datos es PostgreSQL 17. Son 10 tablas.'),
     ...img(D('der'), 640, 'Figura 1 — DER de GoTrain (notación pata de gallo)'),
     BR(), H1('2. Relaciones'),
     tabla(['Relación', 'Cardinalidad', 'Descripción'], [
@@ -351,7 +351,7 @@ async function arquitectura() {
       ['Presentación — Mobile', 'React Native 0.88, Expo SDK 58, AsyncStorage', 'App Android (APK) con navegación por pestañas. Guarda token y servidor en el dispositivo.'],
       ['Aplicación', 'Python 3.13, Flask 3, Flask-CORS, PyJWT', 'API REST, autenticación, validaciones, reglas de negocio (XP, racha, retos, logros).'],
       ['Servicio IA', 'SDK anthropic (Python), Claude API', 'Genera respuestas y rutinas con salida estructurada JSON; modo demo como alternativa.'],
-      ['Datos', 'SQLAlchemy 2 + PostgreSQL 17 / SQLite', 'Persistencia. El motor se elige con DATABASE_URL.'],
+      ['Datos', 'SQLAlchemy 2 + PostgreSQL 17 (psycopg 3)', 'Persistencia. La conexión se configura en el archivo .env.'],
     ], [1.5, 2.3, 3.4]),
     H1('3. Decisiones de diseño'),
     bullets([
@@ -360,7 +360,7 @@ async function arquitectura() {
       '**Lógica de gamificación en el servidor:** XP, racha, progreso de retos y logros se calculan al guardar un entrenamiento, así los clientes no pueden alterarlos.',
       '**Salida estructurada de la IA:** se le pide a Claude un JSON con un esquema fijo (mensaje + rutina), lo que permite mostrar e importar la rutina de forma confiable.',
       '**Degradación controlada:** si la IA falla, el Coach usa reglas (modo demo) y la app sigue funcionando.',
-      '**ORM:** el mismo código corre sobre SQLite (desarrollo y pruebas) y PostgreSQL (producción).',
+      '**PostgreSQL + ORM:** base relacional con integridad referencial; las pruebas automatizadas usan una base PostgreSQL separada (gotrain_test) para no tocar los datos de la demo.',
     ]),
     H1('4. API REST'),
     P('Formato JSON. Autenticación con el encabezado **Authorization: Bearer <token>**. Errores con el formato **{"error": "mensaje"}** y códigos 400 / 401 / 404.'),
@@ -371,12 +371,13 @@ async function arquitectura() {
     bullets(['Contraseñas con hash (Werkzeug scrypt).', 'Tokens JWT HS256 con vencimiento de 7 días.', 'Cada consulta filtra por el usuario del token (no se accede a datos ajenos).',
       'Secretos (SECRET_KEY, ANTHROPIC_API_KEY) en variables de entorno.', 'CORS habilitado para los clientes; en producción se recomienda HTTPS.']),
     H1('7. Despliegue'),
-    tabla(['Elemento', 'Desarrollo local', 'Publicación (Render, render.yaml)'], [
-      ['API Flask', 'python app.py (puerto 5000)', 'Servicio web "gotrain-api" con Gunicorn y HTTPS'],
-      ['Base de datos', 'SQLite (backend/instance/gotrain.db)', 'PostgreSQL administrado "gotrain-db"'],
-      ['Web', 'Vite dev server (puerto 5173, proxy /api)', 'Sitio estático "gotrain-web" (npm run build) con VITE_API_URL'],
-      ['Mobile', 'Expo Go en la misma red WiFi', 'APK release (arm64) apuntando a la API publicada'],
-    ], [1.4, 2.6, 3]),
+    P('El sistema se ejecuta en la PC del equipo de desarrollo; los clientes se conectan por la red local.'),
+    tabla(['Elemento', 'Ejecución', 'Detalle'], [
+      ['Base de datos', 'PostgreSQL 17 (puerto 5433)', 'Bases "gotrain" y "gotrain_test". Se crean con crear_base.py y se cargan con seed.py.'],
+      ['API Flask', 'python app.py (puerto 5000)', 'Se inicia con 1_iniciar_backend.bat, que también levanta PostgreSQL.'],
+      ['Web', 'Vite (puerto 5173, proxy /api)', 'Se inicia con 2_iniciar_web.bat.'],
+      ['Mobile', 'APK release (arm64) o Expo Go', 'En el APK se configura la IP de la PC desde la pantalla de login.'],
+    ], [1.4, 2.4, 3.4]),
   ]
   await generar('GoTrain_Diseno_de_Arquitectura', 'Diseño de Arquitectura', null, cuerpo)
 }
@@ -402,14 +403,14 @@ async function componentes() {
       ['API — Coach IA', 'backend/coach.py', 'Consulta a Claude con salida JSON; modo demo.', 'Claude API, Modelos'],
       ['Modelos ORM', 'backend/models.py', 'Entidades y relaciones (SQLAlchemy).', 'Base de datos'],
       ['Datos de ejemplo', 'backend/seed.py', 'Crea las tablas y carga la demo.', 'Modelos'],
-      ['Base de datos', 'PostgreSQL / SQLite', 'Persistencia.', '—'],
+      ['Base de datos', 'PostgreSQL 17', 'Persistencia.', '—'],
       ['Claude API (externo)', 'api.anthropic.com', 'Modelo de lenguaje para el Coach.', '—'],
     ], [1.7, 1.7, 2.8, 1.4]),
     H1('3. Interfaces'),
     tabla(['Interfaz', 'Provista por', 'Requerida por', 'Protocolo'], [
       ['REST /api', 'GoTrain API', 'Web y Mobile', 'HTTP + JSON, Bearer JWT'],
       ['Messages API', 'Claude API', 'Coach IA', 'HTTPS + JSON (SDK anthropic)'],
-      ['SQL', 'PostgreSQL / SQLite', 'Modelos ORM', 'psycopg 3 / sqlite3'],
+      ['SQL', 'PostgreSQL 17', 'Modelos ORM', 'psycopg 3'],
     ], [1.5, 1.6, 1.6, 2.2]),
   ]
   await generar('GoTrain_Diagrama_de_Componentes', 'Diagrama de Componentes', null, cuerpo)
@@ -538,8 +539,7 @@ async function manualApp() {
       'Abrí el archivo descargado. Si Android lo pide, permití **Instalar apps de origen desconocido** para el navegador o el administrador de archivos.',
       'Presioná **Instalar** y después **Abrir**.',
     ]),
-    P('**Servidor:** la app viene configurada con el servidor publicado de GoTrain (https://gotrain-api.onrender.com). Como está en un plan gratuito, la primera conexión del día puede tardar hasta un minuto en "despertar" al servidor.'),
-    P('Para usar un servidor local (la PC que corre el backend, en la misma red WiFi), tocá **Servidor: … · ⚙️ cambiar** en la pantalla de login y escribí la IP de la PC (por ejemplo 192.168.1.9). Después tocá **Guardar servidor**. Si dejás el campo vacío, vuelve al servidor publicado.'),
+    P('**Servidor:** la app se conecta al backend de GoTrain que corre en una PC de la misma red WiFi. La primera vez, tocá **Servidor: … · ⚙️ cambiar** en la pantalla de login y escribí la IP de la PC (por ejemplo 192.168.1.9). Después tocá **Guardar servidor**; la app la recuerda para las próximas veces.'),
     H1('3. Inicio de sesión y registro'),
     P('Ingresá email y contraseña y tocá **Iniciar Sesión →**, o usá **Entrar con la cuenta demo**. Si falta un dato, se marca el campo con el error. Para crear una cuenta tocá **Registrate gratis**.'),
     imgPar(C('app_01_login'), C('app_02_login_validacion'), 'Login', 'Validación de campos'),
@@ -564,7 +564,7 @@ async function manualApp() {
     imgPar(C('app_16_perfil'), C('app_17_editar_perfil'), 'Perfil', 'Editar perfil'),
     H1('9. Preguntas frecuentes'),
     tabla(['Problema', 'Solución'], [
-      ['"No se pudo conectar con el servidor"', 'Con el servidor publicado: esperá un minuto y reintentá (se está despertando). Con un servidor local: verificá que el backend esté corriendo, que el celular esté en la misma WiFi, que la IP sea la de la PC y que el firewall de Windows permita el puerto 5000.'],
+      ['"No se pudo conectar con el servidor"', 'Verificá que el backend esté corriendo, que el celular esté en la misma WiFi, que la IP sea la de la PC y que el firewall de Windows permita el puerto 5000.'],
       ['Android no deja instalar el APK', 'Habilitá "Instalar apps desconocidas" para la app desde la que abrís el archivo.'],
       ['"Sesión vencida"', 'Iniciá sesión de nuevo.'],
       ['El Coach dice "Demo"', 'El servidor no tiene configurada la IA; igual arma rutinas según tu historial.'],
