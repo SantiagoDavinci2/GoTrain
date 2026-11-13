@@ -4,7 +4,7 @@ Uso:  python seed.py      (borra y recrea todas las tablas)
 
 Usuario demo:  santiago@gotrain.com  /  gotrain123
 """
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from app import app, otorgar_badges, actualizar_esquema
 from models import (db, User, Workout, Exercise, SavedRoutine, Challenge, ChallengeParticipant,
@@ -117,7 +117,7 @@ def run():
         part(racha, yo, 21, True)
 
         # Feed de actividad
-        ahora = datetime.utcnow()
+        ahora = datetime.now(timezone.utc).replace(tzinfo=None)
         for u, ic, txt, likes, mins in [
             (ana, "🎉", 'se unió a "100km del mes" — ¡ya son 9 participantes!', 3, 300),
             (tomas, "⚡", 'subió al 2do puesto en "100km del mes"', 6, 180),

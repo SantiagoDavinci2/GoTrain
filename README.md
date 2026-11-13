@@ -61,7 +61,8 @@ python -m venv .venv
 ```
 
 - `crear_base.py` crea las bases `gotrain` (la app) y `gotrain_test` (las pruebas) si no existen.
-- `seed.py` carga las tablas con datos de ejemplo. Volvé a correrlo cuando quieras resetear la demo.
+- `seed.py` carga las tablas con datos de ejemplo, con fechas relativas al día en que se corre.
+- **Antes de una demo o defensa** ejecutá `4_reiniciar_demo.bat`: recarga los datos con las fechas de ese día (racha de 21 días, retos en curso). Borra lo cargado hasta ese momento.
 - La API queda en `http://localhost:5000`.
 - **Cuenta demo:** `santiago@gotrain.com` / `gotrain123`
 
